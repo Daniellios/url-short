@@ -1,0 +1,11 @@
+-- +goose Up
+CREATE TABLE urls (
+    id BIGSERIAL PRIMARY KEY,
+    original_url TEXT NOT NULL,
+    short_url_code TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP  DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP  DEFAULT CURRENT_TIMESTAMP
+);
+
+-- +goose Down
+DROP TABLE urls;
