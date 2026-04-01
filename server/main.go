@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -11,9 +12,8 @@ import (
 	"example.com/url-short/internal/service"
 	"github.com/joho/godotenv"
 
-	"errors"
-
 	"github.com/lib/pq"
+	"github.com/rs/cors"
 )
 
 type apiConfig struct {
@@ -107,9 +107,14 @@ func main() {
 	godotenv.Load()
 
 	servMux := http.NewServeMux()
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+	}).Handler(servMux)
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: servMux,
+		Handler: corsHandler,
 	}
 
 	apiConfig := apiConfig{
@@ -132,7 +137,6 @@ func main() {
 	servMux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, r *http.Request) {
 		service.RespondWithJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
-
 	server.ListenAndServe()
 }
 
