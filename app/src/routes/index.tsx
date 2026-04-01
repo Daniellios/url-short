@@ -5,7 +5,7 @@ import { createFileRoute } from '@tanstack/react-router'
 export const Route = createFileRoute('/')({ component: App })
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') ?? 'http://localhost:8080'
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') ?? ''
 
 function App() {
   const [longUrl, setLongUrl] = useState('')
