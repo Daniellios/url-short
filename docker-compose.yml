@@ -1,0 +1,44 @@
+services:
+    db: 
+        image: postgres:16-alpine
+        container_name: url-short-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: urlshort
+            POSTGRES_PASSWORD: admin
+            POSTGRES_DB: urlshort
+        volumes:
+            - pg_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U urlshort -d urlshort"]
+            interval: 5s
+            timeout: 3s
+            retries: 10
+    api:
+        build:
+            context: ./server
+            dockerfile: Dockerfile
+        container_name: url-short-api
+        restart: unless-stopped
+        environment:
+            DB_URL: postgres://urlshort:admin@db:5432/urlshort?sslmode=disable
+        depends_on:
+            db:
+                condition: service_healthy
+        expose:
+            - "8080"
+    web:
+        build:
+            context: ./app
+            dockerfile: Dockerfile
+        container_name: url-short-web
+        restart: unless-stopped
+        environment:
+            VITE_API_BASE_URL: http://localhost:8080
+            NODE_ENV: production
+        depends_on:
+            - api
+        ports:
+            - "80:3000"
+volumes:
+    pg_data:
