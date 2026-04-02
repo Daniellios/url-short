@@ -31,7 +31,7 @@ services:
             echo '[migrate] running 001_urls.sql...' && \
             psql -h db -U urlshort -d urlshort -v ON_ERROR_STOP=1 -f /migrations/001_urls.sql && \
             echo '[migrate] urls table after migration:' && \
-            psql -h db -U urlshort -d urlshort -c '\dt urls'"
+            psql -h db -U urlshort -d urlshort -c 'SELECT to_regclass($$public.urls$$) IS NOT NULL AS urls_exists;'"
     api:
         build:
             context: ./server
