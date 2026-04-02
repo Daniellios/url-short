@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { getApiBaseUrl } from '../env'
 
 export const Route = createFileRoute('/')({ component: App })
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') ?? ''
+const API_BASE_URL = getApiBaseUrl()
 
 function App() {
   const [longUrl, setLongUrl] = useState('')

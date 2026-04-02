@@ -39,8 +39,13 @@ services:
         container_name: url-short-api
         restart: unless-stopped
         environment:
+            APP_ENV: production
+            DOCKER: "1"
             DB_URL: postgres://urlshort:${POSTGRES_PASSWORD}@db:5432/urlshort?sslmode=disable
-            DOMAIN: ${DOMAIN}
+            # Browser-facing origin for short links. Prefer COMPOSE_DOMAIN so local Docker can use
+            # localhost while a legacy DOMAIN in .env might still point at a VPS.
+            # Priority: COMPOSE_DOMAIN → DOMAIN → http://localhost
+            DOMAIN: ${COMPOSE_DOMAIN:-${DOMAIN:-http://localhost}}
         depends_on:
             db:
                 condition: service_healthy

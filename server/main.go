@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	"example.com/url-short/internal/database"
 	"example.com/url-short/internal/service"
@@ -104,7 +107,12 @@ func (apiConfig *apiConfig) redirectToOriginalURL(w http.ResponseWriter, r *http
 }
 
 func main() {
-	godotenv.Load()
+	_ = godotenv.Load("server/.env")
+	_ = godotenv.Load(".env")
+
+	if service.IsLocalDev() && strings.TrimSpace(os.Getenv("DOMAIN")) == "" {
+		log.Printf("local dev: short links use http://localhost:8080/{code} (set DOMAIN to override)")
+	}
 
 	servMux := http.NewServeMux()
 	corsHandler := cors.New(cors.Options{
@@ -121,7 +129,10 @@ func main() {
 		db: &database.Queries{},
 	}
 
-	dbURL := os.Getenv("DB_URL")
+	dbURL, err := resolveDBURL()
+	if err != nil {
+		log.Fatal(err)
+	}
 	dbQueries, db, err := setupDB(dbURL)
 	if err != nil {
 		log.Fatalf("Error setting up database: %s", err)
@@ -147,4 +158,28 @@ func setupDB(dbURL string) (*database.Queries, *sql.DB, error) {
 	}
 	dbQueries := database.New(db)
 	return dbQueries, db, nil
+}
+
+func resolveDBURL() (string, error) {
+	if v := strings.TrimSpace(os.Getenv("DB_URL")); v != "" {
+		return v, nil
+	}
+	if service.IsProduction() {
+		return "", fmt.Errorf("DB_URL is required when APP_ENV=production or DOCKER=1")
+	}
+	pass := strings.TrimSpace(os.Getenv("POSTGRES_PASSWORD"))
+	if pass == "" {
+		pass = "admin"
+	}
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword("urlshort", pass),
+		Host:   "localhost:5432",
+		Path:   "/urlshort",
+	}
+	q := u.Query()
+	q.Set("sslmode", "disable")
+	u.RawQuery = q.Encode()
+	log.Printf("local dev: DB_URL not set; using %s (set DB_URL or POSTGRES_PASSWORD to override)", u.Redacted())
+	return u.String(), nil
 }
