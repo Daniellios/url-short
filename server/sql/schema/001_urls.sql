@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE urls (
+CREATE TABLE IF NOT EXISTS urls (
     id BIGSERIAL PRIMARY KEY,
     original_url TEXT NOT NULL,
     short_url_code TEXT NOT NULL UNIQUE,
