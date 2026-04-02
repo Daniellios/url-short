@@ -27,7 +27,11 @@ services:
         volumes:
             - ./server/sql/schema:/migrations:ro
         command: >
-            sh -c "psql -h db -U urlshort -d urlshort -v ON_ERROR_STOP=1 -f /migrations/001_urls.sql"
+            sh -c "echo '[migrate] checking mounted files...' && ls -la /migrations && \
+            echo '[migrate] running 001_urls.sql...' && \
+            psql -h db -U urlshort -d urlshort -v ON_ERROR_STOP=1 -f /migrations/001_urls.sql && \
+            echo '[migrate] urls table after migration:' && \
+            psql -h db -U urlshort -d urlshort -c '\dt urls'"
     api:
         build:
             context: ./server
