@@ -28,9 +28,8 @@ services:
             - ./server/sql/schema:/migrations:ro
         command: >
             sh -c "echo '[migrate] checking mounted files...' && ls -la /migrations && \
-            echo '[migrate] running 001_urls.sql (Up only)...' && \
-            awk 'index($0, "-- +goose Up") {in_up=1; next} index($0, "-- +goose Down") {in_up=0} in_up {print}' /migrations/001_urls.sql | \
-            psql -h db -U urlshort -d urlshort -v ON_ERROR_STOP=1 && \
+            echo '[migrate] running 001_urls.sql...' && \
+            psql -h db -U urlshort -d urlshort -v ON_ERROR_STOP=1 -f /migrations/001_urls.sql && \
             echo '[migrate] urls table after migration:' && \
             psql -h db -U urlshort -d urlshort -c \"SELECT to_regclass('public.urls') IS NOT NULL AS urls_exists;\""
     api:
