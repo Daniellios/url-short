@@ -32,7 +32,7 @@ function App() {
 
     setIsSubmitting(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/urls`, {
+      const response = await fetch(`${API_BASE_URL}/api/url-short/urls`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
