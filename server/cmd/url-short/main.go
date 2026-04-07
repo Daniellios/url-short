@@ -142,6 +142,7 @@ func main() {
 	servMux.HandleFunc("POST /api/url-short/urls", apiConfig.createShortURL)
 
 	servMux.HandleFunc("GET /api/url-short/{short_url}", apiConfig.redirectToOriginalURL)
+	servMux.HandleFunc("GET /{short_url}", apiConfig.redirectToOriginalURL)
 
 	servMux.HandleFunc("GET /api/url-short/healthz", func(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"status": "ok"})
