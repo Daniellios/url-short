@@ -1,0 +1,10 @@
+-- +goose Up
+CREATE TABLE IF NOT EXISTS pastes (
+    id BIGSERIAL PRIMARY KEY,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- +goose Down
+DROP TABLE pastes;
