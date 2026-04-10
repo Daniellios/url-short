@@ -31,10 +31,23 @@ services:
         entrypoint: ["/bin/sh", "-c"]
         command:
             - |
-                set -e
+                set -eu
                 mkdir -p /tmp/mig
-                cp /schema-up/*.sql /tmp/mig/
-                cp /schema-down/*.sql /tmp/mig/
+                n_up=0
+                for f in /schema-up/*.sql; do
+                  [ -f "$$f" ] || continue
+                  cp "$$f" /tmp/mig/
+                  n_up=$$((n_up + 1))
+                done
+                for f in /schema-down/*.sql; do
+                  [ -f "$$f" ] || continue
+                  cp "$$f" /tmp/mig/
+                done
+                if [ "$$n_up" -eq 0 ]; then
+                  echo "migrate(url-short): no .sql under /schema-up — run compose from repo root (docker-compose.yml next to server/) or fix volume paths" >&2
+                  ls -la /schema-up /schema-down >&2 || true
+                  exit 1
+                fi
                 exec migrate -path "file:///tmp/mig" -database "$$DATABASE_URL" up
     # migrate does not create databases; ensure pastebin exists before migrate-pastebin.
     init-pastebin-db:
@@ -66,10 +79,23 @@ services:
         entrypoint: ["/bin/sh", "-c"]
         command:
             - |
-                set -e
+                set -eu
                 mkdir -p /tmp/mig
-                cp /schema-up/*.sql /tmp/mig/
-                cp /schema-down/*.sql /tmp/mig/
+                n_up=0
+                for f in /schema-up/*.sql; do
+                  [ -f "$$f" ] || continue
+                  cp "$$f" /tmp/mig/
+                  n_up=$$((n_up + 1))
+                done
+                for f in /schema-down/*.sql; do
+                  [ -f "$$f" ] || continue
+                  cp "$$f" /tmp/mig/
+                done
+                if [ "$$n_up" -eq 0 ]; then
+                  echo "migrate(pastebin): no .sql under /schema-up — run compose from repo root or fix volume paths" >&2
+                  ls -la /schema-up /schema-down >&2 || true
+                  exit 1
+                fi
                 exec migrate -path "file:///tmp/mig" -database "$$DATABASE_URL" up
     api:
         build:
