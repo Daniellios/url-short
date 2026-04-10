@@ -61,7 +61,7 @@ function App() {
   }
 
   return (
-    <main className="page-wrap px-4 pb-8 pt-14">
+    <main className="page-wrap page-shorten px-4 pb-8 pt-14">
       <section className="island-shell rise-in mx-auto max-w-2xl rounded-2xl p-6 sm:p-8">
         <h1 className="display-title mb-2 text-3xl sm:text-4xl">Paste a long URL</h1>
         <p className="mb-6 text-sm opacity-80">Generate a short link in one click.</p>

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShortenUrlIndexRouteImport } from './routes/shorten-url/index'
 import { Route as PastebinIndexRouteImport } from './routes/pastebin/index'
+import { Route as PastebinIdRouteImport } from './routes/pastebin/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,33 +29,42 @@ const PastebinIndexRoute = PastebinIndexRouteImport.update({
   path: '/pastebin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PastebinIdRoute = PastebinIdRouteImport.update({
+  id: '/pastebin/$id',
+  path: '/pastebin/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/pastebin/$id': typeof PastebinIdRoute
   '/pastebin/': typeof PastebinIndexRoute
   '/shorten-url/': typeof ShortenUrlIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/pastebin/$id': typeof PastebinIdRoute
   '/pastebin': typeof PastebinIndexRoute
   '/shorten-url': typeof ShortenUrlIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/pastebin/$id': typeof PastebinIdRoute
   '/pastebin/': typeof PastebinIndexRoute
   '/shorten-url/': typeof ShortenUrlIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/pastebin/' | '/shorten-url/'
+  fullPaths: '/' | '/pastebin/$id' | '/pastebin/' | '/shorten-url/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/pastebin' | '/shorten-url'
-  id: '__root__' | '/' | '/pastebin/' | '/shorten-url/'
+  to: '/' | '/pastebin/$id' | '/pastebin' | '/shorten-url'
+  id: '__root__' | '/' | '/pastebin/$id' | '/pastebin/' | '/shorten-url/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PastebinIdRoute: typeof PastebinIdRoute
   PastebinIndexRoute: typeof PastebinIndexRoute
   ShortenUrlIndexRoute: typeof ShortenUrlIndexRoute
 }
@@ -82,11 +92,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PastebinIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pastebin/$id': {
+      id: '/pastebin/$id'
+      path: '/pastebin/$id'
+      fullPath: '/pastebin/$id'
+      preLoaderRoute: typeof PastebinIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PastebinIdRoute: PastebinIdRoute,
   PastebinIndexRoute: PastebinIndexRoute,
   ShortenUrlIndexRoute: ShortenUrlIndexRoute,
 }

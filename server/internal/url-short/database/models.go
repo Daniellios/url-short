@@ -9,6 +9,7 @@ import (
 )
 
 type Url struct {
+	ID           int64
 	OriginalUrl  string
 	ShortUrlCode string
 	CreatedAt    sql.NullTime

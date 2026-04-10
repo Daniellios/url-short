@@ -7,42 +7,88 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createPaste = `-- name: CreatePaste :one
-INSERT INTO pastes (content) VALUES ($1) RETURNING id, content, created_at, updated_at
+INSERT INTO pastes (title, content, is_public, expires_at)
+VALUES ($1, $2, $3, $4)
+RETURNING id, title, content, created_at, updated_at, is_public, expires_at
 `
 
-func (q *Queries) CreatePaste(ctx context.Context, content string) (Paste, error) {
-	row := q.db.QueryRowContext(ctx, createPaste, content)
-	var i Paste
+type CreatePasteParams struct {
+	Title     string
+	Content   string
+	IsPublic  bool
+	ExpiresAt sql.NullTime
+}
+
+type CreatePasteRow struct {
+	ID        int64
+	Title     string
+	Content   string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	IsPublic  bool
+	ExpiresAt sql.NullTime
+}
+
+func (q *Queries) CreatePaste(ctx context.Context, arg CreatePasteParams) (CreatePasteRow, error) {
+	row := q.db.QueryRowContext(ctx, createPaste,
+		arg.Title,
+		arg.Content,
+		arg.IsPublic,
+		arg.ExpiresAt,
+	)
+	var i CreatePasteRow
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
 		&i.Content,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsPublic,
+		&i.ExpiresAt,
 	)
 	return i, err
 }
 
 const getAllPastes = `-- name: GetAllPastes :many
-SELECT id, content, created_at, updated_at FROM pastes
+SELECT id, title, content, created_at, updated_at, is_public, expires_at
+FROM pastes
+WHERE is_public = true
+  AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+ORDER BY created_at DESC
+LIMIT 10
 `
 
-func (q *Queries) GetAllPastes(ctx context.Context) ([]Paste, error) {
+type GetAllPastesRow struct {
+	ID        int64
+	Title     string
+	Content   string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	IsPublic  bool
+	ExpiresAt sql.NullTime
+}
+
+func (q *Queries) GetAllPastes(ctx context.Context) ([]GetAllPastesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllPastes)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Paste
+	var items []GetAllPastesRow
 	for rows.Next() {
-		var i Paste
+		var i GetAllPastesRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.Title,
 			&i.Content,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.IsPublic,
+			&i.ExpiresAt,
 		); err != nil {
 			return nil, err
 		}
@@ -58,17 +104,33 @@ func (q *Queries) GetAllPastes(ctx context.Context) ([]Paste, error) {
 }
 
 const getPaste = `-- name: GetPaste :one
-SELECT id, content, created_at, updated_at FROM pastes WHERE id = $1
+SELECT id, title, content, created_at, updated_at, is_public, expires_at
+FROM pastes
+WHERE id = $1
+  AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
 `
 
-func (q *Queries) GetPaste(ctx context.Context, id int64) (Paste, error) {
+type GetPasteRow struct {
+	ID        int64
+	Title     string
+	Content   string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	IsPublic  bool
+	ExpiresAt sql.NullTime
+}
+
+func (q *Queries) GetPaste(ctx context.Context, id int64) (GetPasteRow, error) {
 	row := q.db.QueryRowContext(ctx, getPaste, id)
-	var i Paste
+	var i GetPasteRow
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
 		&i.Content,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsPublic,
+		&i.ExpiresAt,
 	)
 	return i, err
 }

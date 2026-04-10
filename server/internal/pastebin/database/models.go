@@ -13,4 +13,7 @@ type Paste struct {
 	Content   string
 	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime
+	Title     string
+	IsPublic  bool
+	ExpiresAt sql.NullTime
 }

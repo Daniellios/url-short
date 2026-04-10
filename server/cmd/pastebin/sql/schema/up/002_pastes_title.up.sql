@@ -1,0 +1,3 @@
+-- +goose Up
+ALTER TABLE pastes
+    ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT '';

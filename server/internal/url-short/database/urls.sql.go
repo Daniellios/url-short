@@ -10,7 +10,7 @@ import (
 )
 
 const createShortURL = `-- name: CreateShortURL :one
-INSERT INTO urls (original_url, short_url_code) VALUES ($1, $2) RETURNING original_url, short_url_code, created_at, updated_at
+INSERT INTO urls (original_url, short_url_code) VALUES ($1, $2) RETURNING id, original_url, short_url_code, created_at, updated_at
 `
 
 type CreateShortURLParams struct {
@@ -22,6 +22,7 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 	row := q.db.QueryRowContext(ctx, createShortURL, arg.OriginalUrl, arg.ShortUrlCode)
 	var i Url
 	err := row.Scan(
+		&i.ID,
 		&i.OriginalUrl,
 		&i.ShortUrlCode,
 		&i.CreatedAt,
@@ -31,13 +32,14 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 }
 
 const getShortURL = `-- name: GetShortURL :one
-SELECT original_url, short_url_code, created_at, updated_at FROM urls WHERE short_url_code = $1
+SELECT id, original_url, short_url_code, created_at, updated_at FROM urls WHERE short_url_code = $1
 `
 
 func (q *Queries) GetShortURL(ctx context.Context, shortUrlCode string) (Url, error) {
 	row := q.db.QueryRowContext(ctx, getShortURL, shortUrlCode)
 	var i Url
 	err := row.Scan(
+		&i.ID,
 		&i.OriginalUrl,
 		&i.ShortUrlCode,
 		&i.CreatedAt,

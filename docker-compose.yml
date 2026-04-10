@@ -15,42 +15,62 @@ services:
             timeout: 3s
             retries: 10
 
+    # golang-migrate reads a flat directory; merge sql/schema/up + down into /tmp/mig before running.
     migrate:
-        image: postgres:16-alpine
+        image: migrate/migrate:v4.18.3
         container_name: url-short-migrate
         restart: "no"
         depends_on:
             db:
                 condition: service_healthy
         environment:
-            PGPASSWORD: ${POSTGRES_PASSWORD}
+            DATABASE_URL: postgres://urlshort:${POSTGRES_PASSWORD}@db:5432/urlshort?sslmode=disable
         volumes:
-            - ./server/cmd/url-short/sql/schema:/migrations:ro
-        command: >
-            sh -c "echo '[migrate] checking mounted files...' && ls -la /migrations && \
-            echo '[migrate] running 001_urls.up.sql...' && \
-            psql -h db -U urlshort -d urlshort -v ON_ERROR_STOP=1 -f /migrations/001_urls.up.sql && \
-            echo '[migrate] urls table after migration:' && \
-            psql -h db -U urlshort -d urlshort -c \"SELECT to_regclass('public.urls') IS NOT NULL AS urls_exists;\""
-    migrate-pastebin:
+            - ./server/cmd/url-short/sql/schema/up:/schema-up:ro
+            - ./server/cmd/url-short/sql/schema/down:/schema-down:ro
+        entrypoint: ["/bin/sh", "-c"]
+        command:
+            - |
+                set -e
+                mkdir -p /tmp/mig
+                cp /schema-up/*.sql /tmp/mig/
+                cp /schema-down/*.sql /tmp/mig/
+                exec migrate -path "file:///tmp/mig" -database "$$DATABASE_URL" up
+    # migrate does not create databases; ensure pastebin exists before migrate-pastebin.
+    init-pastebin-db:
         image: postgres:16-alpine
-        container_name: url-short-migrate-pastebin
+        container_name: url-short-init-pastebin-db
         restart: "no"
         depends_on:
             db:
                 condition: service_healthy
         environment:
             PGPASSWORD: ${POSTGRES_PASSWORD}
-        volumes:
-            - ./server/cmd/pastebin/sql/schema:/migrations:ro
         command: >
-            sh -c "echo '[migrate-pastebin] ensuring pastebin db exists...' && \
-            (psql -h db -U urlshort -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname = 'pastebin'\" | grep -q 1) \
-            || psql -h db -U urlshort -d postgres -v ON_ERROR_STOP=1 -c \"CREATE DATABASE pastebin\" && \
-            echo '[migrate-pastebin] running 001_pastes.up.sql...' && \
-            psql -h db -U urlshort -d pastebin -v ON_ERROR_STOP=1 -f /migrations/001_pastes.up.sql && \
-            echo '[migrate-pastebin] pastes table after migration:' && \
-            psql -h db -U urlshort -d pastebin -c \"SELECT to_regclass('public.pastes') IS NOT NULL AS pastes_exists;\""
+            sh -c "(psql -h db -U urlshort -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname = 'pastebin'\" | grep -q 1)
+            || psql -h db -U urlshort -d postgres -v ON_ERROR_STOP=1 -c \"CREATE DATABASE pastebin\""
+    migrate-pastebin:
+        image: migrate/migrate:v4.18.3
+        container_name: url-short-migrate-pastebin
+        restart: "no"
+        depends_on:
+            db:
+                condition: service_healthy
+            init-pastebin-db:
+                condition: service_completed_successfully
+        environment:
+            DATABASE_URL: postgres://urlshort:${POSTGRES_PASSWORD}@db:5432/pastebin?sslmode=disable
+        volumes:
+            - ./server/cmd/pastebin/sql/schema/up:/schema-up:ro
+            - ./server/cmd/pastebin/sql/schema/down:/schema-down:ro
+        entrypoint: ["/bin/sh", "-c"]
+        command:
+            - |
+                set -e
+                mkdir -p /tmp/mig
+                cp /schema-up/*.sql /tmp/mig/
+                cp /schema-down/*.sql /tmp/mig/
+                exec migrate -path "file:///tmp/mig" -database "$$DATABASE_URL" up
     api:
         build:
             context: ./server

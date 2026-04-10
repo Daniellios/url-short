@@ -1,0 +1,4 @@
+-- +goose Up
+ALTER TABLE pastes
+    ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP NULL;
