@@ -48,7 +48,7 @@ services:
                   ls -la /schema-up /schema-down >&2 || true
                   exit 1
                 fi
-                exec migrate -path "file:///tmp/mig" -database "$$DATABASE_URL" up
+                exec migrate -path "/tmp/mig" -database "$$DATABASE_URL" up
     # migrate does not create databases; ensure pastebin exists before migrate-pastebin.
     init-pastebin-db:
         image: postgres:16-alpine
@@ -96,7 +96,7 @@ services:
                   ls -la /schema-up /schema-down >&2 || true
                   exit 1
                 fi
-                exec migrate -path "file:///tmp/mig" -database "$$DATABASE_URL" up
+                exec migrate -path "/tmp/mig" -database "$$DATABASE_URL" up
     api:
         build:
             context: ./server
