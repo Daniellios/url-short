@@ -218,11 +218,9 @@ func main() {
 	defer db.Close()
 	apiConfig.db = dbQueries
 
-	servMux.HandleFunc("POST /api/pastebin/pastes", apiConfig.createPastebin)
-
-	servMux.HandleFunc("GET /api/pastebin/pastes/{id}", apiConfig.getPastebin)
-
-	servMux.HandleFunc("GET /api/pastebin/pastes", apiConfig.getAllPastes)
+	servMux.Handle("POST /api/pastebin/pastes", utils.RateLimitMiddleware(http.HandlerFunc(apiConfig.createPastebin)))
+	servMux.Handle("GET /api/pastebin/pastes/{id}", utils.RateLimitMiddleware(http.HandlerFunc(apiConfig.getPastebin)))
+	servMux.Handle("GET /api/pastebin/pastes", utils.RateLimitMiddleware(http.HandlerFunc(apiConfig.getAllPastes)))
 
 	servMux.HandleFunc("GET /api/pastebin/healthz", func(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"status": "ok"})
